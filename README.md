@@ -34,7 +34,7 @@ Microservicio encargado de la gestión de pedidos para el sistema de Perfulandia
 
 1. Clonar el repositorio:
    ```bash
-   git clone https://github.com/tu-usuario/pedidos-service.git
+   git clone https://github.com/SilverWallDiscs/Microservicio_Pedidos.git
    ```
 
 2. Configurar la base de datos:
