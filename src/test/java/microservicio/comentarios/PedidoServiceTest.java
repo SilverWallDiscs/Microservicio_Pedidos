@@ -1,28 +1,25 @@
 package microservicio.comentarios;
 
-import microservicio.pedidos.model.ItemPedido;
-import microservicio.pedidos.model.Pedido;
-import microservicio.pedidos.service.PedidoService;
-import microservicio.pedidos.repository.PedidoRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.client.RestTemplate;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-@ExtendWith(MockitoExtension.class)
+import microservicio.pedidos.model.ItemPedido;
+import microservicio.pedidos.model.Pedido;
+import microservicio.pedidos.repository.PedidoRepository;
+import microservicio.pedidos.service.PedidoService;
+import org.springframework.web.client.RestTemplate;
+
 public class PedidoServiceTest {
 
     @Mock
@@ -38,7 +35,9 @@ public class PedidoServiceTest {
     private ItemPedido testItem;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+        
         testItem = new ItemPedido();
         testItem.setItemId(1L);
         testItem.setProductoId(101L);
@@ -58,9 +57,8 @@ public class PedidoServiceTest {
         testPedido.setItems(Arrays.asList(testItem));
     }
 
-
     @Test
-    void whenCrearPedido_withMissingRequiredData_thenThrowRuntimeException() {
+    public void crearPedidoConDatosFaltantesTest() {
         testPedido.setClienteId(null);
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
@@ -72,21 +70,20 @@ public class PedidoServiceTest {
         verify(restTemplate, times(0)).postForObject(anyString(), anyList(), eq(Boolean.class));
     }
 
-
     @Test
-    void whenActualizarPedidoCompleto_withNotFoundId_thenThrowRuntimeException() {
+    public void actualizarPedidoCompletoNoExistenteTest() {
         when(pedidoRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             pedidoService.actualizarPedidoCompleto(99L, testPedido);
         });
+        
         assertEquals("Pedido no encontrado con ID: 99", exception.getMessage());
         verify(pedidoRepository, never()).save(any(Pedido.class));
     }
 
-
     @Test
-    void whenActualizarEstado_thenReturnUpdatedPedido() {
+    public void actualizarEstadoTest() {
         when(pedidoRepository.findById(1L)).thenReturn(Optional.of(testPedido));
         when(pedidoRepository.save(any(Pedido.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -98,30 +95,31 @@ public class PedidoServiceTest {
     }
 
     @Test
-    void whenActualizarEstado_withNotFoundId_thenThrowRuntimeException() {
+    public void actualizarEstadoNoExistenteTest() {
         when(pedidoRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             pedidoService.actualizarEstado(99L, "CANCELADO");
         });
+        
         assertEquals("Pedido no encontrado con ID: 99", exception.getMessage());
         verify(pedidoRepository, never()).save(any(Pedido.class));
     }
 
     @Test
-    void whenActualizarEstado_withNullEstado_thenThrowRuntimeException() {
+    public void actualizarEstadoNuloTest() {
         when(pedidoRepository.findById(1L)).thenReturn(Optional.of(testPedido));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             pedidoService.actualizarEstado(1L, null);
         });
+        
         assertEquals("El nuevo estado no puede ser nulo o vacío.", exception.getMessage());
         verify(pedidoRepository, never()).save(any(Pedido.class));
     }
 
-
     @Test
-    void whenObtenerPedidosPorCliente_thenReturnListOfPedidos() {
+    public void obtenerPedidosPorClienteTest() {
         when(pedidoRepository.findByClienteId(10L)).thenReturn(Arrays.asList(testPedido));
 
         List<Pedido> pedidos = pedidoService.obtenerPedidosPorCliente(10L);
@@ -133,7 +131,7 @@ public class PedidoServiceTest {
     }
 
     @Test
-    void whenObtenerPedidosPorCliente_withNoPedidos_thenReturnEmptyList() {
+    public void obtenerPedidosPorClienteNoExistenteTest() {
         when(pedidoRepository.findByClienteId(99L)).thenReturn(Collections.emptyList());
 
         List<Pedido> pedidos = pedidoService.obtenerPedidosPorCliente(99L);
@@ -143,17 +141,17 @@ public class PedidoServiceTest {
     }
 
     @Test
-    void whenObtenerPedidosPorCliente_withInvalidClienteId_thenThrowRuntimeException() {
+    public void obtenerPedidosPorClienteIdInvalidoTest() {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             pedidoService.obtenerPedidosPorCliente(0L);
         });
+        
         assertEquals("El ID del cliente no puede ser nulo o inválido.", exception.getMessage());
         verify(pedidoRepository, never()).findByClienteId(anyLong());
     }
 
-
     @Test
-    void whenObtenerPedidoPorId_thenReturnPedido() {
+    public void obtenerPedidoPorIdTest() {
         when(pedidoRepository.findById(1L)).thenReturn(Optional.of(testPedido));
 
         Pedido foundPedido = pedidoService.obtenerPedidoPorId(1L);
@@ -164,27 +162,29 @@ public class PedidoServiceTest {
     }
 
     @Test
-    void whenObtenerPedidoPorId_withNotFoundId_thenThrowRuntimeException() {
+    public void obtenerPedidoPorIdNoExistenteTest() {
         when(pedidoRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             pedidoService.obtenerPedidoPorId(99L);
         });
+        
         assertEquals("Pedido no encontrado con ID: 99", exception.getMessage());
         verify(pedidoRepository, times(1)).findById(99L);
     }
 
     @Test
-    void whenObtenerPedidoPorId_withInvalidId_thenThrowRuntimeException() {
+    public void obtenerPedidoPorIdInvalidoTest() {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             pedidoService.obtenerPedidoPorId(0L);
         });
+        
         assertEquals("El ID del pedido no puede ser nulo o inválido.", exception.getMessage());
         verify(pedidoRepository, never()).findById(anyLong());
     }
 
     @Test
-    void whenDeletePedidoById_thenCallRepositoryDelete() {
+    public void eliminarPedidoPorIdTest() {
         when(pedidoRepository.existsById(1L)).thenReturn(true);
         doNothing().when(pedidoRepository).deleteById(1L);
 
@@ -195,22 +195,24 @@ public class PedidoServiceTest {
     }
 
     @Test
-    void whenDeletePedidoById_withNotFoundId_thenThrowRuntimeException() {
+    public void eliminarPedidoPorIdNoExistenteTest() {
         when(pedidoRepository.existsById(anyLong())).thenReturn(false);
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             pedidoService.deletePedidoById(99L);
         });
+        
         assertEquals("Pedido no encontrado con ID: 99", exception.getMessage());
         verify(pedidoRepository, times(1)).existsById(99L);
         verify(pedidoRepository, never()).deleteById(anyLong());
     }
 
     @Test
-    void whenDeletePedidoById_withInvalidId_thenThrowRuntimeException() {
+    public void eliminarPedidoPorIdInvalidoTest() {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             pedidoService.deletePedidoById(0L);
         });
+        
         assertEquals("El ID del pedido a eliminar no puede ser nulo o inválido.", exception.getMessage());
         verify(pedidoRepository, never()).existsById(anyLong());
         verify(pedidoRepository, never()).deleteById(anyLong());
